@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marcas de Excelencia - WoT Console</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+}
+
+h1 {
+    color: #38bdf8;
+    margin-bottom: 20px;
+}
+
+.search-box {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+input {
+    padding: 12px;
+    width: 280px;
+    border-radius: 10px;
+    border: none;
+    font-size: 16px;
+}
+
+button {
+    padding: 12px 18px;
+    border-radius: 10px;
+    border: none;
+    background: #38bdf8;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #0ea5e9;
+}
+
+.card {
+    background: #1e293b;
+    padding: 25px;
+    border-radius: 16px;
+    width: 320px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.card h2 {
+    margin-top: 0;
+    color: #38bdf8;
+}
+
+.mark {
+    background: #0f172a;
+    padding: 8px;
+    border-radius: 8px;
+    margin: 6px 0;
+}
+
+.error {
+    color: #f87171;
+    font-weight: bold;
+}
+
+@keyframes fadeIn {
+    from {opacity: 0; transform: translateY(10px);}
+    to {opacity: 1; transform: translateY(0);}
+}
+</style>
+</head>
+<body>
+
+<h1>Marcas de Excelencia - WoT Console</h1>
+
+<div class="search-box">
+    <input type="text" id="tankInput" placeholder="Ej: RU 251">
+    <button onclick="buscarTanque()">Buscar</button>
+</div>
+
+<div id="resultado"></div>
+
+<script>
+async function buscarTanque() {
+    const nombre = document.getElementById("tankInput").value.toLowerCase().trim();
+    const resultadoDiv = document.getElementById("resultado");
+    resultadoDiv.innerHTML = "Buscando...";
+
+    try {
+        const response = await fetch("https://wotconsole.info/marks/");
+        const html = await response.text();
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+
+        const filas = doc.querySelectorAll("tbody tr");
+        let encontrado = false;
+
+        filas.forEach(fila => {
+            const nombreCelda = fila.querySelector("td:nth-child(5) span");
+            if (!nombreCelda) return;
+
+            const nombreTanque = nombreCelda.textContent.trim();
+            if (nombreTanque.toLowerCase().includes(nombre)) {
+
+                const marcas = fila.querySelectorAll("td.mark");
+                const tier = fila.querySelector("td:nth-child(3)")?.textContent.trim();
+                const tipo = fila.querySelector("td:nth-child(2)")?.textContent.trim();
+
+                resultadoDiv.innerHTML = `
+                    <div class="card">
+                        <h2>${nombreTanque}</h2>
+                        <p><strong>Tier:</strong> ${tier} | <strong>Tipo:</strong> ${tipo}</p>
+                        <div class="mark">⭐ 1 Marca: ${marcas[0]?.textContent || "-"}</div>
+                        <div class="mark">⭐⭐ 2 Marcas: ${marcas[1]?.textContent || "-"}</div>
+                        <div class="mark">⭐⭐⭐ 3 Marcas: ${marcas[2]?.textContent || "-"}</div>
+                        <div class="mark">⭐⭐⭐⭐ 4 Marcas: ${marcas[3]?.textContent || "-"}</div>
+                    </div>
+                `;
+
+                encontrado = true;
+            }
+        });
+
+        if (!encontrado) {
+            resultadoDiv.innerHTML = `<p class="error">Tanque no encontrado.</p>`;
+        }
+
+    } catch (error) {
+        resultadoDiv.innerHTML = `<p class="error">El sitio bloqueó la solicitud (CORS).</p>`;
+    }
+}
+</script>
+
+</body>
+</html>
