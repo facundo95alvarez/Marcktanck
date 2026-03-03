@@ -2,9 +2,17 @@ const express = require("express");
 const axios = require("axios");
 const cheerio = require("cheerio");
 const cors = require("cors");
+const path = require("path");
 
 const app = express();
 app.use(cors());
+
+// 🔥 ESTO FALTABA
+app.use(express.static("public"));
+
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 app.get("/buscar", async (req, res) => {
     const nombre = req.query.tanque?.toLowerCase().trim();
